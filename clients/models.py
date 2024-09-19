@@ -7,8 +7,8 @@ class Client(models.Model):
     first_name = models.CharField(max_length=150, blank=False)
     last_name = models.CharField(max_length=150, blank=False)
     email = models.EmailField(blank=False)
-    preferences = models.TextField()
-    notes = models.TextField()
+    preferences = models.TextField(blank=True)
+    notes = models.TextField(blank=True)
     join_date = models.DateField(auto_now_add=True)
     updated_on = models.DateField(auto_now=True)
 
