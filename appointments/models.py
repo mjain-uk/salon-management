@@ -10,7 +10,7 @@ class Appointment(models.Model):
     event_date = models.DateField(blank=False)
     consultation_date = models.DateField(blank=True)
     notes = models.TextField(blank = True)
-    estimated_total = models.DecimalField(max_digits=6, decimal_places=2, blank=True, default=0.00)
+    estimated_total = models.DecimalField(max_digits=7, decimal_places=2, blank=True, default=0.00)
     created_on = models.DateField(auto_now_add=True)
     updated_on = models.DateField(auto_now=True)    
 
