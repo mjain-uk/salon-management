@@ -7,9 +7,18 @@ from django.contrib.auth import authenticate
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
-
-from accounts.models import CustomUser
+from django.utils.http import urlsafe_base64_decode
+from django.utils.encoding import force_str
+from django.contrib.auth import get_user_model
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from accounts.utils import account_activation_token
 from accounts.serializers import CustomUserSerializer,LoginAuthSerializer
+
+
+
+User = get_user_model()
 
 # Create your views here.
 
@@ -20,7 +29,7 @@ class UserRegistrationCreateView(CreateAPIView):
 
 class UsersListView(ListAPIView):
     """Generic View for Listing User Profiles"""
-    queryset = CustomUser.objects.all()
+    queryset = User.objects.all()
     serializer_class = CustomUserSerializer
     permission_class = [AllowAny]
 
@@ -40,3 +49,24 @@ class LoginUsingAuthToken(ObtainAuthToken):
             'user_id': user.pk,
             'email': user.email
         })
+
+class ActivateAccountView(APIView):
+
+    def get(self, request, uidb64, token, *args, **kwargs):
+        try:
+            # Decode user ID
+            uid = force_str(urlsafe_base64_decode(uidb64))
+            user = User.objects.get(pk=uid)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            return Response({'error': 'Invalid token or user ID'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check if the token is valid
+        if account_activation_token.check_token(user, token):
+            user.is_active = True
+            user.save()
+
+            # Activation successful
+            return Response({'message': 'Account activated successfully!'}, status=status.HTTP_200_OK)
+        else:
+            # Token invalid
+            return Response({'error': 'Activation link is invalid!'}, status=status.HTTP_400_BAD_REQUEST)

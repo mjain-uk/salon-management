@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from accounts.models import CustomUser
 from django.contrib.auth import authenticate
+from accounts.utils import AccountActivationUtils
 
 class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -9,7 +10,8 @@ class CustomUserSerializer(serializers.ModelSerializer):
         extra_kwargs = {'password': {'write_only': True, 'min_length': 5}, 'id':{'read_only':True}}
 
     def create(self, validated_data):
-        user = CustomUser.objects.create_user(**validated_data)
+        user = CustomUser.objects.create_user(**validated_data, is_active=False)
+        AccountActivationUtils.send_activation_email(user, self.context['request'])
         return user
     
     def to_representation(self, instance):
