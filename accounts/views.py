@@ -14,7 +14,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from accounts.utils import account_activation_token
-from accounts.serializers import CustomUserSerializer,LoginAuthSerializer
+from accounts.serializers import CustomUserSerializer,LoginAuthSerializer, ResetPasswordSerializer, SetNewPasswordSerializer
 
 
 
@@ -70,3 +70,50 @@ class ActivateAccountView(APIView):
         else:
             # Token invalid
             return Response({'error': 'Activation link is invalid!'}, status=status.HTTP_400_BAD_REQUEST)
+
+class ResetPasswordView(APIView):
+    def post(self, request):
+        serializer = ResetPasswordSerializer(data=request.data,context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        return Response({'success': 'Password Reset link has been sent'}, status=status.HTTP_200_OK)
+
+class PasswordResetConfirmView(APIView):
+
+    def get(self, request, uidb64, token, *args, **kwargs):
+        try:
+            # Decode user ID
+            uid = force_str(urlsafe_base64_decode(uidb64))
+            user = User.objects.get(email=uid)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            return Response({'error': 'Invalid token or user email'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check if the token is valid
+        if account_activation_token.check_token(user, token):
+
+            # Activation successful
+            return Response({'message': 'Token verified successfully!'}, status=status.HTTP_200_OK)
+        else:
+            # Token invalid
+            return Response({'error': 'Reset link is invalid or has expired.'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    def post(self, request, uidb64, token):
+        try:
+            # Decode user ID
+            uid = force_str(urlsafe_base64_decode(uidb64))
+            user = User.objects.get(email=uid)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            return Response({'error': 'Invalid token or user email'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if not account_activation_token.check_token(user, token):
+            return Response({'error': 'Reset link is invalid or has expired.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        serializer = SetNewPasswordSerializer(data = request.data)
+        if serializer.is_valid():
+            new_password = serializer.validated_data['password']
+            user.set_password(new_password)
+            user.save()
+
+            return Response({'message': 'Password reset successful!'}, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        

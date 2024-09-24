@@ -110,6 +110,9 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',  # Add this line
     ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'salonmanagement.permissions.IsAuthenticatedAndActive',  # Use the custom permission class globally
+    ],
 }
 
 # Internationalization
