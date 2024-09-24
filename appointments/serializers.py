@@ -6,3 +6,5 @@ class AppointmentSerializer(serializers.ModelSerializer):
         model = Appointment
         fields = ['id', 'client', 'service', 'event_date', 'consultation_date', 'created_on']
 
+    
+
